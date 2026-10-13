@@ -1,0 +1,14 @@
+#!/bin/sh
+# umbreld runs this as root before `docker compose up`, with the app's
+# environment: APP_DATA_ROOT (the data folder, wherever the user moved it),
+# TOR_PROXY_IP and TOR_PROXY_PORT among it. Tailscale reads its serve config
+# from a file, so both forwards are written here. i2pd runs as uid 1000 and
+# must own its data.
+data="${APP_DATA_ROOT:-$(dirname "$0")/../data}"
+cd "$data" || exit 0
+mkdir -p tor i2p i2pd run/tor run/i2p serve
+printf '{"TCP": {"9050": {"TCPForward": "%s:%s"}}}\n' \
+  "${TOR_PROXY_IP:-10.21.21.11}" "${TOR_PROXY_PORT:-9050}" > serve/tor.json
+printf '{"TCP": {"4447": {"TCPForward": "%s"}}}\n' \
+  "winnow-gateways_i2pd_1:4447" > serve/i2p.json
+chown -R 1000:1000 i2pd

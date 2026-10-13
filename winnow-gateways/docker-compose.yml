@@ -1,0 +1,74 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: winnow-gateways_status_1
+      APP_PORT: 8480
+
+  # Tailscale in userspace mode, serving tailnet TCP 9050 from Umbrel's Tor
+  # proxy. The hook writes that forward from TOR_PROXY_IP and TOR_PROXY_PORT.
+  # A tagged auth key applies its tags; an untagged one leaves the machine
+  # under the key's owner, with key expiry on.
+  tor:
+    image: tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065
+    restart: on-failure
+    environment:
+      TS_HOSTNAME: winnow-tor-gateway
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SOCKET: /run/ts/tailscaled.sock
+      TS_USERSPACE: "true"
+      TS_AUTH_ONCE: "true"
+      TS_SERVE_CONFIG: /config/tor.json
+    volumes:
+      - ${APP_DATA_DIR}/data/tor:/var/lib/tailscale
+      - ${APP_DATA_DIR}/data/run/tor:/run/ts
+      - ${APP_DATA_DIR}/data/serve:/config:ro
+
+  i2p:
+    image: tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065
+    restart: on-failure
+    environment:
+      TS_HOSTNAME: winnow-i2p-gateway
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SOCKET: /run/ts/tailscaled.sock
+      TS_USERSPACE: "true"
+      TS_AUTH_ONCE: "true"
+      TS_SERVE_CONFIG: /config/i2p.json
+    volumes:
+      - ${APP_DATA_DIR}/data/i2p:/var/lib/tailscale
+      - ${APP_DATA_DIR}/data/run/i2p:/run/ts
+      - ${APP_DATA_DIR}/data/serve:/config:ro
+
+  # Its own router, not the Bitcoin app's, which only offers SAM. SOCKS is
+  # reachable on the app network only; the console, HTTP proxy and SAM are off.
+  i2pd:
+    image: purplei2p/i2pd:release-2.61.0@sha256:422f6715f635d1af0a6ae4937447471477deb6e6719bf5935029be674e4f4cdd
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    command:
+      - --socksproxy.address=0.0.0.0
+      - --socksproxy.port=4447
+      - --httpproxy.enabled=false
+      - --http.enabled=false
+      - --sam.enabled=false
+      - --loglevel=error
+    volumes:
+      - ${APP_DATA_DIR}/data/i2pd:/home/i2pd/data
+
+  # The status page: each gateway's tailnet state, read from its tailscaled
+  # socket, and a SOCKS greeting to the proxy behind it.
+  status:
+    image: python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    command: ["python3", "/app/status.py"]
+    environment:
+      TOR_UPSTREAM: ${TOR_PROXY_IP}:${TOR_PROXY_PORT}
+      I2P_UPSTREAM: winnow-gateways_i2pd_1:4447
+    volumes:
+      - ${APP_DATA_DIR}/status.py:/app/status.py:ro
+      - ${APP_DATA_DIR}/data/run/tor:/run/tor
+      - ${APP_DATA_DIR}/data/run/i2p:/run/i2p

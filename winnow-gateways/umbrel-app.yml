@@ -1,0 +1,43 @@
+manifestVersion: 2.0
+id: winnow-gateways
+storage:
+  dataRoot: data
+environment:
+  - name: TS_AUTHKEY
+    services: [tor, i2p]
+    note: A reusable Tailscale auth key. Tagged is best, since a tagged machine's key never expires; its tags need an owner in your tailnet policy. Each gateway uses the key once, so it can be cleared after both have joined.
+category: networking
+name: Winnow Gateways
+version: "1.0.0"
+tagline: Tor and I2P gateways for Winnow, on your tailnet
+description: >-
+  Winnow's Automatic peer routing looks on your tailnet for two SOCKS5
+  gateways, winnow-tor-gateway on port 9050 and winnow-i2p-gateway on port
+  4447, and when either answers, sends its Bitcoin peer connections over Tor
+  and I2P through them, so peers never see your phone's IP address. This app
+  runs both. Tor goes through Umbrel's own Tor proxy; I2P through the app's own
+  i2pd router. Each gateway joins your tailnet as its own machine and serves
+  its SOCKS port there and nothing else: no routes, no exit node, no LAN or
+  internet ports.
+
+
+  Enter a reusable Tailscale auth key in the app's settings. The status page
+  shows whether each gateway has joined under the name Winnow looks for.
+releaseNotes: ""
+
+developer: Winnow
+website: https://winnowwallet.com
+dependencies: []
+repo: https://github.com/winnowwallet/umbrel-app-store
+support: https://github.com/winnowwallet/umbrel-app-store/issues
+
+port: 8487
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: Winnow
+submission: https://github.com/winnowwallet/umbrel-app-store
+icon: https://raw.githubusercontent.com/winnowwallet/umbrel-app-store/main/winnow-gateways/icon.svg
