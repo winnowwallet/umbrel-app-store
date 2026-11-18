@@ -10,7 +10,7 @@ Winnow resolves two names through Tailscale's own resolver and uses whichever
 answers a SOCKS5 greeting: `winnow-tor-gateway:9050` and
 `winnow-i2p-gateway:4447`. When either answers, it sends every Bitcoin peer
 connection through Tor and I2P and none direct. How the wallet decides is in
-[winnow's peer-gateway guide](https://github.com/winnowwallet/winnow/blob/main/docs/peer-gateways.md).
+[winnow's peer-gateway guide](https://github.com/winnowwallet/winnow-lean/blob/main/docs/peer-gateways.md).
 
 The app joins your tailnet as two machines with those names. Tor goes through
 Umbrel's own Tor proxy; I2P through an i2pd router in the app. The gateways
